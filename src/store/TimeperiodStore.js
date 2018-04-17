@@ -1,5 +1,5 @@
 import { observable, action, computed, when } from 'mobx';
-import { getTimeUnit } from './utils';
+import { getTimeUnit, getIntervalInSeconds } from './utils';
 import MenuStore from './MenuStore';
 
 export default class TimeperiodStore {
@@ -19,6 +19,24 @@ export default class TimeperiodStore {
         const { timeUnit, interval } = this.context.stx.layout;
         this.timeUnit = getTimeUnit({ timeUnit, interval });
         this.interval = interval;
+
+        const stx = this.context.stx;
+        const displayMilliseconds = (ms) => {
+            const totalSec = ms / 1000;
+            if (totalSec <= 0) { return null; }
+            const padNum = (n) => ('0' + n).slice(-2);
+            const seconds = padNum(Math.trunc((totalSec       ) % 60));
+            const minutes = padNum(Math.trunc((totalSec / 60  ) % 60));
+            let   hours   =        Math.trunc((totalSec / 3600) % 24);
+            hours = hours ? hours + ':' : '';
+            return `${hours}${minutes}:${seconds}`;
+        };
+
+        setInterval(() => {
+            let diff = new Date() - stx.chart.dataSet[stx.chart.dataSet.length-1].DT;
+            const remain = (getIntervalInSeconds(stx.layout) * 1000) - diff;
+            console.log(displayMilliseconds(remain));
+        }, 1000);
     }
 
     @action.bound setPeriodicity(interval, timeUnit) {
